@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數位人文專題：三隻小豬文本流變模擬</title>
+    <style>
+        /* --- 全局設定 --- */
+        body {
+            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+            background-color: #eef2f3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        /* --- 卡片容器設計 --- */
+        .container {
+            background: white;
+            padding: 3rem; /* 加大內距讓畫面更氣派 */
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+            width: 90%;
+            max-width: 800px; /* 報告用，寬度加寬 */
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        h2 {
+            color: #555;
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+
+        p.subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            margin-top: -10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        /* --- 階段控制 --- */
+        .stage {
+            display: none; /* 預設隱藏 */
+            animation: fadeIn 0.8s ease;
+        }
+        .stage.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- 巨型 Emoji 圖示 --- */
+        .icon-display {
+            font-size: 6rem; /* 超大圖示 */
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        /* --- 搖晃動畫 (給大野狼吹氣用) --- */
+        .shake {
+            animation: shake 0.5s;
+            animation-iteration-count: infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* --- 按鈕群組 --- */
+        .btn-group {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px; /* 圓角按鈕 */
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        /* 材質按鈕顏色 */
+        .btn-straw { background-color: #f1c40f; color: #333; } /* 黃色 */
+        .btn-wood { background-color: #d35400; color: white; } /* 棕橘色 */
+        .btn-brick { background-color: #c0392b; color: white; } /* 紅色 */
+
+        /* 命運按鈕顏色 */
+        .btn-bad { background-color: #34495e; color: white; } /* 深灰 */
+        .btn-good { background-color: #27ae60; color: white; } /* 綠色 */
+        
+        .btn-reset { 
+            background-color: #3498db; 
+            color: white; 
+            margin-top: 30px;
+            padding: 10px 40px;
+        }
+
+        /* --- Metadata 資料卡樣式 (圖資系重點) --- */
+        .metadata-box {
+            background-color: #f8f9fa;
+            border-left: 6px solid #2980b9;
+            padding: 20px;
+            margin: 30px auto;
+            text-align: left;
+            border-radius: 0 10px 10px 0;
+            max-width: 600px;
+        }
+        
+        .metadata-title {
+            font-weight: bold;
+            color: #2980b9;
+            margin-bottom: 10px;
+            display: block;
+            font-size: 1.1rem;
+        }
+
+        .metadata-content {
+            line-height: 1.8;
+            font-size: 1rem;
+            color: #555;
+        }
+
+        .result-highlight {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>三隻小豬：文本流變模擬器</h1>
+    <p class="subtitle">Digital Humanities Project: The Evolution of The Three Little Pigs</p>
+
+    <div id="stage-build" class="stage active">
+        <div class="icon-display">🐷</div>
+        <h2>請選擇建築材料進行文本模擬：</h2>
+        <div class="btn-group">
+            <button class="btn-straw" onclick="buildHouse('straw')">🌾 稻草 (防禦力: 10)</button>
+            <button class="btn-wood" onclick="buildHouse('wood')">🪵 木頭 (防禦力: 50)</button>
+            <button class="btn-brick" onclick="buildHouse('brick')">🧱 磚塊 (防禦力: 100)</button>
+        </div>
+    </div>
+
+    <div id="stage-blow" class="stage">
+        <div class="icon-display" id="house-icon">🏠</div>
+        <h2 id="blow-message">大野狼正在用力吹氣...</h2>
+        <div class="icon-display">🌬️🐺</div>
+    </div>
+
+    <div id="stage-fate" class="stage">
+        <div class="icon-display">💥</div>
+        <h2>房子倒塌了！</h2>
+        <p style="font-size: 1.2rem; margin-bottom: 20px;">
+            此處為故事的分歧點。<br>身為敘事者，您希望採用哪個時代的結局版本？
+        </p>
+        <div class="btn-group">
+            <button class="btn-bad" onclick="chooseFate('bad')">💀 1890 原版 (悲劇)</button>
+            <button class="btn-good" onclick="chooseFate('good')">🏃 1933 改編版 (喜劇)</button>
+        </div>
+    </div>
+
+    <div id="stage-end" class="stage">
+        <div class="icon-display" id="end-icon">📖</div>
+        <div class="result-highlight" id="end-text"></div>
+        
+        <div class="metadata-box">
+            <span class="metadata-title">【文獻考證 Metadata】</span>
+            <div class="metadata-content">
+                <strong>出處：</strong> <span id="meta-source"></span><br>
+                <strong>年份：</strong> <span id="meta-year"></span><br>
+                <strong>文化意涵：</strong> <span id="meta-desc"></span>
+            </div>
+        </div>
+
+        <button class="btn-reset" onclick="resetGame()">🔄 重新模擬</button>
+    </div>
+</div>
+
+<script>
+    // --- 資料層 (Model) ---
+    const materials = {
+        'straw': { name: '稻草屋', defense: 10, icon: '🌾🏠' },
+        'wood': { name: '木屋', defense: 50, icon: '🪵🏠' },
+        'brick': { name: '磚塊屋', defense: 100, icon: '🧱🏠' }
+    };
+
+    const wolfPower = 60; // 大野狼攻擊力閾值
+
+    // --- 視圖控制層 (View) ---
+    function showStage(stageId) {
+        // 隱藏所有階段
+        document.querySelectorAll('.stage').forEach(el => el.classList.remove('active'));
+        // 顯示指定階段
+        document.getElementById(stageId).classList.add('active');
+    }
+
+    // --- 邏輯控制層 (Controller) ---
+
+    // 1. 玩家選擇蓋房子
+    function buildHouse(type) {
+        const material = materials[type];
+        
+        // 設定吹氣階段的畫面
+        document.getElementById('blow-message').innerText = `大野狼對著${material.name}用力吹氣...`;
+        document.getElementById('house-icon').innerText = material.icon;
+        
+        // 加入搖晃動畫
+        document.getElementById('house-icon').classList.add('shake');
+        
+        showStage('stage-blow');
+
+        // 模擬 2 秒的緊張感，然後判斷結果
+        setTimeout(() => {
+            document.getElementById('house-icon').classList.remove('shake'); // 停止搖晃
+
+            if (material.defense < wolfPower) {
+                // 房子倒塌 -> 進入命運選擇
+                showStage('stage-fate');
+            } else {
+                // 房子堅固 -> 直接進入勝利結局
+                showVictory();
+            }
+        }, 2000);
+    }
+
+    // 2. 處理勝利 (磚塊屋)
+    function showVictory() {
+        const text = "房子紋風不動！大野狼氣喘吁吁地放棄了。小豬在溫暖的爐火邊煮著湯。";
+        const meta = {
+            source: "Common Version (普遍流傳版)",
+            year: "19th - 21st Century",
+            desc: "磚塊屋的勝利是所有版本的共同核心。這反映了社會對「勤勉」與「長遠規劃」價值觀的肯定，也是工業社會強調堅固結構的隱喻。"
+        };
+        renderEnd(text, meta, '🎉');
+    }
+
+    // 3. 處理玩家選擇的命運 (核心功能)
+    function chooseFate(fateType) {
+        let text = "";
+        let meta = {};
+        let icon = "";
+
+        if (fateType === 'bad') {
+            // 悲劇結局
+            text = "房子倒塌，小豬來不及逃跑，被大野狼一口吞掉了！";
+            icon = "🍽️";
+            meta = {
+                source: "Joseph Jacobs, English Fairy Tales",
+                year: "1890",
+                desc: "原始民間故事版本非常殘酷。在那個時代，童話故事往往用來警示兒童「懶惰會導致死亡」，沒有現代迪士尼式的溫情與救贖。"
+            };
+        } else {
+            // 喜劇結局
+            text = "房子倒塌的一瞬間，小豬拔腿狂奔，成功逃進了哥哥的磚塊屋！";
+            icon = "🏃💨";
+            meta = {
+                source: "Walt Disney Animation, Three Little Pigs",
+                year: "1933",
+                desc: "此版本發行於經濟大蕭條期間。迪士尼修改了結局，強調「團結力量大」與「希望」，為了給予當時痛苦的社會大眾心理慰藉，因此小豬必須活下來。"
+            };
+        }
+
+        renderEnd(text, meta, icon);
+    }
+
+    // 4. 渲染最終結果
+    function renderEnd(text, meta, icon) {
+        document.getElementById('end-text').innerText = text;
+        document.getElementById('end-icon').innerText = icon;
+        
+        document.getElementById('meta-source').innerText = meta.source;
+        document.getElementById('meta-year').innerText = meta.year;
+        document.getElementById('meta-desc').innerText = meta.desc;
+
+        showStage('stage-end');
+    }
+
+    // 5. 重新開始
+    function resetGame() {
+        showStage('stage-build');
+    }
+</script>
+
+</body>
+</html>
