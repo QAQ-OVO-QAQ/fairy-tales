@@ -72,6 +72,23 @@
         .dialogue-box { width: 90%; max-width: 600px; height: 100px; background: rgba(0,0,0,0.6); border: 2px solid #888; border-radius: 10px; padding: 15px; margin-top: 10px; font-size: 0.95rem; line-height: 1.4; overflow-y: auto; }
         .speaker { color: #f1c40f; font-weight: bold; display: block; margin-bottom: 5px; }
 
+        /* 回首頁按鈕 */
+        .home-btn {
+            margin: 20px 0;
+            padding: 10px 25px;
+            background-color: #5d4037;
+            color: #ecf0f1;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            border: 1px solid #8e44ad;
+            transition: all 0.3s;
+        }
+        .home-btn:hover {
+            background-color: #8e44ad;
+            transform: scale(1.05);
+        }
+
         /* 結局遮罩 */
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 100; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; padding: 20px; }
     </style>
@@ -110,6 +127,8 @@
         <span id="dialogue-text">妳是葛麗特。哥哥被關在籠子裡，女巫正在準備晚餐。妳必須找到骨頭騙過檢查，並伺機殺死女巫。小心別發出太大聲音！</span>
     </div>
 
+    <a href="index.html" class="home-btn">🏠 回首頁</a>
+
     <div id="overlay" class="overlay">
         <h2 id="end-title" style="font-size: 2.5rem; margin-bottom: 20px;"></h2>
         <p id="end-desc" style="font-size: 1.1rem; line-height: 1.6; max-width: 500px; color: #ccc; margin-bottom: 30px;"></p>
@@ -117,7 +136,10 @@
             <strong style="color: #f1c40f;">【結局解析】</strong><br>
             <span id="lib-note"></span>
         </div>
-        <button class="action-btn" style="width: auto; margin-top: 30px; padding: 10px 30px;" onclick="location.reload()">重新挑戰</button>
+        <div style="margin-top:30px;">
+            <button class="action-btn" style="width: auto; padding: 10px 30px; display:inline-block; margin-right: 15px;" onclick="location.reload()">重新挑戰</button>
+            <button class="action-btn" style="width: auto; padding: 10px 30px; display:inline-block;" onclick="location.href='index.html'">回首頁</button>
+        </div>
     </div>
 
 <script>
