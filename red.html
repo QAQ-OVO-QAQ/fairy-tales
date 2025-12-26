@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小紅帽：資訊查核模擬器</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #ece5dd; display: flex; justify-content: center; height: 100vh; margin: 0; }
+        .phone-frame { width: 100%; max-width: 400px; background: #fff; height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        
+        /* 頂部導覽列 */
+        .chat-header { background-color: #2c3e50; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 1.1rem; }
+        
+        /* 聊天區域 */
+        .chat-area { flex: 1; padding: 20px; overflow-y: auto; background-color: #7fb3d5; display: flex; flex-direction: column; gap: 15px; }
+        
+        .message { max-width: 80%; padding: 10px 15px; border-radius: 20px; font-size: 0.95rem; line-height: 1.4; position: relative; animation: popIn 0.3s ease; }
+        .msg-left { align-self: flex-start; background-color: white; color: #333; border-bottom-left-radius: 5px; }
+        .msg-right { align-self: flex-end; background-color: #95e1d3; color: #333; border-bottom-right-radius: 5px; }
+        
+        /* 底部選項區 */
+        .controls { padding: 20px; background: white; border-top: 1px solid #ddd; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        
+        button { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-ask { background-color: #3498db; color: white; }
+        .btn-trust { background-color: #27ae60; color: white; width: 100%; }
+        .btn-report { background-color: #c0392b; color: white; width: 100%; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* 結果視窗 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; text-align: center; color: white; padding: 20px; box-sizing: border-box; }
+        .modal.active { display: flex; }
+        .metadata-box { background: rgba(255,255,255,0.1); border: 1px solid white; padding: 15px; margin-top: 20px; text-align: left; font-size: 0.9rem; }
+
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="phone-frame">
+    <div class="chat-header">與 "奶奶" 的對話</div>
+    <div class="chat-area" id="chat-box">
+        <div class="message msg-left">小紅帽，快進來，門沒鎖...</div>
+    </div>
+    
+    <div class="controls">
+        <div class="btn-grid">
+            <button class="btn-ask" onclick="ask('ears')" id="btn-ears">🔍 檢查耳朵</button>
+            <button class="btn-ask" onclick="ask('eyes')" id="btn-eyes">🔍 檢查眼睛</button>
+            <button class="btn-ask" onclick="ask('teeth')" id="btn-teeth">🔍 檢查牙齒</button>
+            <button class="btn-ask" onclick="ask('voice')" id="btn-voice">🔍 檢查聲音</button>
+        </div>
+        <div class="btn-grid">
+            <button class="btn-trust" onclick="decide('trust')">💖 相信並進門</button>
+            <button class="btn-report" onclick="decide('report')">🚨 檢舉假帳號 (逃跑)</button>
+        </div>
+    </div>
+</div>
+
+<div id="result-modal" class="modal">
+    <div>
+        <h1 id="res-title"></h1>
+        <p id="res-desc" style="font-size: 1.2rem;"></p>
+        <div class="metadata-box">
+            <strong>【版本考證 Metadata】</strong><br>
+            <span id="res-meta"></span>
+        </div>
+        <button onclick="location.reload()" style="margin-top:20px; background:white; color:#333;">重新連線</button>
+    </div>
+</div>
+
+<script>
+    const chatBox = document.getElementById('chat-box');
+    let suspicionLevel = 0;
+
+    const responses = {
+        'ears': "喔...那是為了更清楚聽到妳的聲音啊，親愛的。",
+        'eyes': "那是...為了更清楚看到妳可愛的臉龐啊。",
+        'teeth': "這是...為了更方便把妳吃掉！ (對方收回了一則訊息)",
+        'voice': "咳咳...奶奶只是感冒了，聲音才這麼低沉。"
+    };
+
+    function ask(type) {
+        // 1. 玩家發問
+        let questionText = "";
+        if(type === 'ears') questionText = "奶奶，妳的耳朵怎麼這麼大？";
+        if(type === 'eyes') questionText = "奶奶，妳的眼睛怎麼這麼大？";
+        if(type === 'teeth') questionText = "奶奶，妳的牙齒怎麼這麼尖？";
+        if(type === 'voice') questionText = "奶奶，妳的聲音聽起來怪怪的？";
+
+        addMessage(questionText, 'right');
+        document.getElementById('btn-'+type).disabled = true; // 禁用按鈕
+
+        // 2. 系統延遲回覆
+        setTimeout(() => {
+            let reply = responses[type];
+            if(type === 'teeth') {
+                reply = "那是為了...方便吃...喔不，是為了咀嚼硬的食物！";
+                suspicionLevel += 2;
+            } else {
+                suspicionLevel += 1;
+            }
+            addMessage(reply, 'left');
+        }, 1000);
+    }
+
+    function addMessage(text, side) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message msg-${side}`;
+        msgDiv.innerText = text;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function decide(choice) {
+        const modal = document.getElementById('result-modal');
+        const title = document.getElementById('res-title');
+        const desc = document.getElementById('res-desc');
+        const meta = document.getElementById('res-meta');
+
+        modal.classList.add('active');
+
+        if (choice === 'trust') {
+            // 悲劇 (佩羅版)
+            title.innerText = "❌ 查核失敗：妳被吃掉了";
+            desc.innerText = "妳相信了錯誤的資訊來源，大野狼把妳吞進肚子裡。";
+            meta.innerHTML = "出處：Charles Perrault (1697)<br>說明：早期的版本是為了警示宮廷女性小心陌生男子，沒有獵人，結局是純粹的悲劇。";
+        } else {
+            // 喜劇 (格林版/現代版)
+            title.innerText = "✅ 查核成功：成功逃脫";
+            desc.innerText = "妳發現對方特徵不符，拒絕存取並尋求獵人協助。";
+            meta.innerHTML = "出處：Grimm Brothers (1812)<br>說明：格林兄弟蒐集的版本加入了「獵人」角色，賦予故事救援與重生的希望，符合當時強調家庭與秩序的價值觀。";
+        }
+    }
+</script>
+</body>
+</html>
